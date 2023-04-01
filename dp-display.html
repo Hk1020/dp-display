@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<!--
+    DP-Display
+
+    By Gary Wolfe
+    Version: 1.0
+    Last edit: 4/1/2023
+    Original creation date: 4/1/2023
+    License: Free to use by former users of DPReview.com to view their data.  No guarantee of accuracy or suitability is given.
+
+    This local web page allows you to drag-and-drop your DPReview message dump (if you requested your data from DPR)
+    and present the messages in a more human-readable format.
+
+    At the present, more work is needed to correctly format the data.
+
+    How to use:
+
+    - Drag and drop your forum-posts.json file into the box
+    - From the list of displayed topics, choose which batch of messages you want displayed
+      (It may take several seconds for it to unpack the data)
+    - Scroll down or use the search to see your messages and quoted info.
+
+    Limitations:
+
+    - Currently, I don't clear out the previous data, so if you keep clicking on topics, it just appends to the bottom of 
+      the document, which will get very large.
+    - There's not enough formatting.  Quoted data is not indented or colored, and the whole page is not styled.
+
+-->
+<head>
+    <title>DP-Display</title>
+    <style>
+      #drop-area {
+        border: 5px dashed rgb(0, 225, 255);
+        width: 440px;
+        height: 272px;
+      }
+    </style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+</head>
+
+  <body>
+    <h1>DP-Display</h1>
+    Drag-and-drop your forums-posts.json file here!
+    <div id="drop-area"></div>
+<script>
+
+const dropArea = document.getElementById('drop-area');
+
+//For info on how to drag-and-drop and load files:  https://web.dev/read-files/
+
+dropArea.addEventListener('dragover', (event) => {
+  event.stopPropagation();
+  event.preventDefault();
+  
+  event.dataTransfer.dropEffect = 'copy';
+});
+
+dropArea.addEventListener('drop', (event) => {
+  event.stopPropagation();
+  event.preventDefault();
+  const fileList = event.dataTransfer.files;
+  console.log(fileList);
+
+  const file=fileList[0]
+  const reader = new FileReader();
+    reader.addEventListener('load', event => {
+        processFile(event.target.result);
+    });
+    reader.readAsText(file);
+});
+
+
+var data;
+var distinctValues;
+
+function processFile(fileContents) {
+
+    data = JSON.parse(fileContents);
+    let list = data.forumPosts;
+
+    const distinctValues = [...new Set(list.map(item => item.forum))];
+    //TODO: if #topicList exists, remove?  Or, perhaps after loading, remove #drop-area.
+    const myDiv = document.createElement('div');
+    myDiv.setAttribute('id','topicList');
+    const htmlList = document.createElement('ul');
+    myDiv.appendChild(htmlList);
+    var index=0;
+    distinctValues.forEach(key => {
+    const li = document.createElement('li');
+    li.setAttribute("id", "topic_"+index++);
+    const link = document.createElement('a');
+    link.textContent = key;
+    link.setAttribute("href","#");
+    li.appendChild(link);
+    htmlList.appendChild(li);
+    });
+
+    document.body.appendChild(myDiv);
+
+    $(function() {
+        $("#topicList ul li").click(function() {
+            //alert(this.id); 
+            //TODO: clear out contents of previous list
+
+            const myDiv = document.createElement('div');
+            let list = data.forumPosts;
+            let index = this.id.substring("topic_".length);
+            const subHeader = document.createElement('h2');
+            subHeader.innerText = distinctValues[index];
+            myDiv.appendChild(subHeader);
+            list.filter(p => p.forum==distinctValues[index]).forEach(post => printPost(post, myDiv));
+            document.body.appendChild(myDiv);
+            }
+
+        );
+        function printPost(post, outerDiv) {
+            const myDiv = document.createElement('div');
+            //Setting innerHTML isn't standard, but should work in most browsers anyway.
+            myDiv.innerHTML = '<hr/>' +post.subject + '<br/>' + post.postDate  + '<br/>' + post.messageTextHtml;
+            outerDiv.appendChild(myDiv);
+        }
+    });
+}
+
+</script>
+
+    
+</body>
