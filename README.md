@@ -17,3 +17,4 @@ At the present, more work is needed to correctly format the data.
 - Currently, I don't clear out the previous data, so if you keep clicking on topics, it just appends to the bottom of 
     the document, which will get very large.  For now, refresh the web page to start over with a clean page.
 - There's not enough formatting.  Quoted data is not indented or colored, and the whole page is not styled.
+- Readers have not been created for the other .json files, only forum-posts.json.
