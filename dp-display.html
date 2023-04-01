@@ -115,6 +115,10 @@ function processFile(fileContents) {
 
         );
         function printPost(post, outerDiv) {
+            const link = document.createElement('a');
+            link.textContent = post.url;
+            link.setAttribute("href",post.url);
+            outerDiv.appendChild(link);
             const myDiv = document.createElement('div');
             //Setting innerHTML isn't standard, but should work in most browsers anyway.
             myDiv.innerHTML = '<hr/>' +post.subject + '<br/>' + post.postDate  + '<br/>' + post.messageTextHtml;
