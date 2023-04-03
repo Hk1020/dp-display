@@ -100,29 +100,50 @@ function processFile(fileContents) {
 
     $(function() {
         $("#topicList ul li").click(function() {
-            //alert(this.id); 
-            //TODO: clear out contents of previous list
+          //alert(this.id); 
+          //TODO: clear out contents of previous list
 
-            const myDiv = document.createElement('div');
-            let list = data.forumPosts;
-            let index = this.id.substring("topic_".length);
-            const subHeader = document.createElement('h2');
-            subHeader.innerText = distinctValues[index];
-            myDiv.appendChild(subHeader);
-            list.filter(p => p.forum==distinctValues[index]).forEach(post => printPost(post, myDiv));
-            document.body.appendChild(myDiv);
-            }
+          const myDiv = document.createElement('div');
+          let list = data.forumPosts;
+          let index = this.id.substring("topic_".length);
+          const subHeader = document.createElement('h2');
+          subHeader.innerText = distinctValues[index];
+          myDiv.appendChild(subHeader);
+          list.filter(p => p.forum==distinctValues[index]).forEach(post => printPost(post, myDiv));
+          document.body.appendChild(myDiv);
 
-        );
+          //switch img urls where a better attribute is present.  Check for current-owner, else it'll load other's images,
+          //potentially transferring a lot more data.
+          const images = document.images;
+          for (let i = 0; i < images.length; i++) {
+              const img = images[i];
+              //If img is inside a quote class, assume it's not ours.  Skip them.  
+              //Class-quote is used in older DPR messages, while blockquote is used in newer messages.
+              if (img.parentElement.parentElement.parentElement.className != 'quote' && 
+                img.parentElement.parentElement.parentElement.localName != 'blockquote') {
+                if (img.dataset.dprClickthroughUrl != undefined) {
+                  img.src = img.dataset.dprClickthroughUrl;
+                }
+                else 
+                if (img.dataset.dprUrl != undefined) {
+                  //use the link to the external site
+                  img.src = img.dataset.dprUrl;
+                }
+                //Remaining photos will attempt to load using img.src.
+                //A lot of the URLs need to be rebuilt with a different path plus a numeric user ID, 
+                //but the format isn't obvious.
+              }
+          }
+        });
         function printPost(post, outerDiv) {
-            const link = document.createElement('a');
-            link.textContent = post.url;
-            link.setAttribute("href",post.url);
-            outerDiv.appendChild(link);
-            const myDiv = document.createElement('div');
-            //Setting innerHTML isn't standard, but should work in most browsers anyway.
-            myDiv.innerHTML = '<hr/>' +post.subject + '<br/>' + post.postDate  + '<br/>' + post.messageTextHtml;
-            outerDiv.appendChild(myDiv);
+          const myDiv = document.createElement('div');
+          //Setting innerHTML isn't standard, but should work in most browsers anyway.
+          myDiv.innerHTML = '<hr/>' +post.subject + '<br/>' + post.postDate  + '<br/>' + post.messageTextHtml;
+          outerDiv.appendChild(myDiv);
+          const link = document.createElement('a');
+          link.textContent = post.url;
+          link.setAttribute("href",post.url);
+          outerDiv.appendChild(link);
         }
     });
 }
