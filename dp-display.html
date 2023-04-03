@@ -97,20 +97,28 @@ function processFile(fileContents) {
     });
 
     document.body.appendChild(myDiv);
+    
+    const forumDiv = document.createElement('div');
+    document.body.appendChild(forumDiv);
+    
+    //const subHeader = document.createElement('h2');
+    //forumDiv.appendChild(subHeader);
+
 
     $(function() {
         $("#topicList ul li").click(function() {
           //alert(this.id); 
           //TODO: clear out contents of previous list
 
-          const myDiv = document.createElement('div');
+          //const myDiv = document.createElement('div');
+          forumDiv.innerHTML = "";
           let list = data.forumPosts;
           let index = this.id.substring("topic_".length);
           const subHeader = document.createElement('h2');
           subHeader.innerText = distinctValues[index];
-          myDiv.appendChild(subHeader);
-          list.filter(p => p.forum==distinctValues[index]).forEach(post => printPost(post, myDiv));
-          document.body.appendChild(myDiv);
+          forumDiv.appendChild(subHeader);
+          list.filter(p => p.forum==distinctValues[index]).forEach(post => printPost(post, forumDiv));
+          //document.body.appendChild(myDiv);
 
           //switch img urls where a better attribute is present.  Check for current-owner, else it'll load other's images,
           //potentially transferring a lot more data.
