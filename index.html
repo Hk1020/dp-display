@@ -102,17 +102,26 @@ async function handleFile(file) {
 	}
 }
 
+const myDiv = document.createElement('div');
+myDiv.setAttribute('id','topicList');
+document.body.appendChild(myDiv);
+
+const forumDiv = document.createElement('div');
+document.body.appendChild(forumDiv);
+
+const htmlList = document.createElement('ul');
 
 function processFile(fileContents) {
+
+	myDiv.innerHTML = "";
+	htmlList.innerHTML = "";
+	forumDiv.innerHTML = "";
 
     data = JSON.parse(fileContents);
     let list = data.forumPosts;
 
     const distinctValues = [...new Set(list.map(item => item.forum))];
     //TODO: if #topicList exists, remove?  Or, perhaps after loading, remove #drop-area.
-    const myDiv = document.createElement('div');
-    myDiv.setAttribute('id','topicList');
-    const htmlList = document.createElement('ul');
     myDiv.appendChild(htmlList);
     var index=0;
     distinctValues.forEach(key => {
@@ -125,11 +134,7 @@ function processFile(fileContents) {
     htmlList.appendChild(li);
     });
 
-    document.body.appendChild(myDiv);
     
-    const forumDiv = document.createElement('div');
-    document.body.appendChild(forumDiv);
-
     $(function() {
         $("#topicList ul li").click(function() {
           //alert(this.id);
