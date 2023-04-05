@@ -160,6 +160,8 @@ function processFile(fileContents) {
                 img.parentElement.parentElement.parentElement.localName != 'blockquote') {
                 if (img.dataset.dprClickthroughUrl != undefined) {
                   img.src = img.dataset.dprClickthroughUrl;
+				  img.width = "560";
+				  img.style.display = "block";
                 }
                 else 
                 if (img.dataset.dprUrl != undefined) {
