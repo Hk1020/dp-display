@@ -36,14 +36,17 @@
         height: 272px;
       }
     </style>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 
   <body>
     <h1>DP-Display</h1>
-    Drag-and-drop your forums-posts.json file here!
+    Drag-and-drop your dpreview-information-request.zip or extracted forums-post.json file here!
     <div id="drop-area"></div>
+	or select it here:
     <p><input type="file" id="file-selector">
+	<div id="log"></div>
 <script>
 
 const dropArea = document.getElementById('drop-area');
@@ -63,40 +66,62 @@ dropArea.addEventListener('drop', (event) => {
   const fileList = event.dataTransfer.files;
   console.log(fileList);
 
-  const file=fileList[0]
-  const reader = new FileReader();
-    reader.addEventListener('load', event => {
-        processFile(event.target.result);
-    });
-    reader.readAsText(file);
+  const file=fileList[0];
+  handleFile(file);
 });
     
-    const fileSelector = document.getElementById('file-selector');
-    fileSelector.addEventListener('change', (event) => {
-        const fileList = event.target.files;
-        console.log(fileList);
-        
-        const file=fileList[0];
-        const reader = new FileReader();
-        reader.addEventListener('load', event => {
-            processFile(event.target.result);
-        });
-        reader.readAsText(file);
-    });
+const fileSelector = document.getElementById('file-selector');
+fileSelector.addEventListener('change', (event) => {
+    const fileList = event.target.files;
+    console.log(fileList);
+
+    const file=fileList[0];
+	handleFile(file);
+});
 
 var data;
 var distinctValues;
 
+const logg = document.getElementById("log");
+
+async function handleFile(file) {
+	if( file.type === "application/zip" ) {
+		try {
+			const zipContents = await JSZip.loadAsync(file);
+			const forumPosts = await zipContents.file("data/forum-posts.json").async("string");
+			processFile(forumPosts);
+		} catch (e) {
+			logg.innerHTML="ERROR " + e;
+		}
+	} else {
+		const reader = new FileReader();
+		reader.addEventListener('load', event => {
+			processFile(event.target.result);
+		});
+		reader.readAsText(file);
+	}
+}
+
+const myDiv = document.createElement('div');
+myDiv.setAttribute('id','topicList');
+document.body.appendChild(myDiv);
+
+const forumDiv = document.createElement('div');
+document.body.appendChild(forumDiv);
+
+const htmlList = document.createElement('ul');
+
 function processFile(fileContents) {
+
+	myDiv.innerHTML = "";
+	htmlList.innerHTML = "";
+	forumDiv.innerHTML = "";
 
     data = JSON.parse(fileContents);
     let list = data.forumPosts;
 
     const distinctValues = [...new Set(list.map(item => item.forum))];
     //TODO: if #topicList exists, remove?  Or, perhaps after loading, remove #drop-area.
-    const myDiv = document.createElement('div');
-    myDiv.setAttribute('id','topicList');
-    const htmlList = document.createElement('ul');
     myDiv.appendChild(htmlList);
     var index=0;
     distinctValues.forEach(key => {
@@ -109,11 +134,7 @@ function processFile(fileContents) {
     htmlList.appendChild(li);
     });
 
-    document.body.appendChild(myDiv);
     
-    const forumDiv = document.createElement('div');
-    document.body.appendChild(forumDiv);
-
     $(function() {
         $("#topicList ul li").click(function() {
           //alert(this.id);
@@ -139,6 +160,8 @@ function processFile(fileContents) {
                 img.parentElement.parentElement.parentElement.localName != 'blockquote') {
                 if (img.dataset.dprClickthroughUrl != undefined) {
                   img.src = img.dataset.dprClickthroughUrl;
+				  img.width = "560";
+				  img.style.display = "block";
                 }
                 else 
                 if (img.dataset.dprUrl != undefined) {

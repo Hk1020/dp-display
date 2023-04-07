@@ -7,14 +7,12 @@ At the present, more work is needed to correctly format the data.
 
 ## How to use:
 
-- Drag and drop your forum-posts.json file into the box
+- Drag and drop your forum-posts.json file or the whole zip file as received from dpreview into the box. Or you could upload them with the button under the box.
 - From the list of displayed topics, choose which batch of messages you want displayed
     (It may take several seconds for it to unpack the data)
 - Scroll down or use the search to see your messages and quoted info.
 
 ## Limitations:
 
-- Currently, I don't clear out the previous data, so if you keep clicking on topics, it just appends to the bottom of 
-    the document, which will get very large.  For now, refresh the web page to start over with a clean page.
 - There's not enough formatting.  Quoted data is not indented or colored, and the whole page is not styled.
 - Readers have not been created for the other .json files, only forum-posts.json.
