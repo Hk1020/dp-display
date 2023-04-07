@@ -85,7 +85,7 @@ var distinctValues;
 const logg = document.getElementById("log");
 
 async function handleFile(file) {
-	if( file.type === "application/zip" ) {
+	if( file.type === "application/zip" || file.type === "application/x-zip-compressed" ) {
 		try {
 			const zipContents = await JSZip.loadAsync(file);
 			const forumPosts = await zipContents.file("data/forum-posts.json").async("string");
