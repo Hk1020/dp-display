@@ -81,6 +81,7 @@ fileSelector.addEventListener('change', (event) => {
 
 var data;
 var distinctValues;
+var forumPosts = "";
 
 const logg = document.getElementById("log");
 
@@ -88,15 +89,16 @@ async function handleFile(file) {
 	if( file.type === "application/zip" || file.type === "application/x-zip-compressed" ) {
 		try {
 			const zipContents = await JSZip.loadAsync(file);
-			const forumPosts = await zipContents.file("data/forum-posts.json").async("string");
-			processFile(forumPosts);
+			forumPosts = await zipContents.file("data/forum-posts.json").async("string");
+			processFile();
 		} catch (e) {
 			logg.innerHTML="ERROR " + e;
 		}
 	} else if( file.type === "application/json" ) {
 		const reader = new FileReader();
 		reader.addEventListener('load', event => {
-			processFile(event.target.result);
+			forumPosts = event.target.result;
+			processFile();
 		});
 		reader.readAsText(file);
 	} else {
@@ -115,8 +117,8 @@ document.body.appendChild(forumDiv);
 
 const htmlList = document.createElement('ul');
 
-function processFile(fileContents) {
-
+function processFile() {
+	const fileContents = forumPosts;
 	myDiv.innerHTML = "";
 	htmlList.innerHTML = "";
 	forumDiv.innerHTML = "";
