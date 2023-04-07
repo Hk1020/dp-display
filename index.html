@@ -186,6 +186,7 @@ function processFile(fileContents) {
           const link = document.createElement('a');
           link.textContent = post.url;
           link.setAttribute("href",post.url);
+			link.setAttribute("target","dplost");
           outerDiv.appendChild(link);
         }
     });
