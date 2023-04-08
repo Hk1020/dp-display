@@ -192,6 +192,7 @@ function processFile() {
                   //use the link to the external site
                   img.src = img.dataset.dprUrl;
                 }
+
                 //Remaining photos will attempt to load using img.src.
                 //A lot of the URLs need to be rebuilt with a different path plus a numeric user ID, 
                 //but the format isn't obvious.
@@ -204,6 +205,25 @@ function processFile() {
       //Setting innerHTML isn't standard, but should work in most browsers anyway.
       myDiv.innerHTML = '<hr/>' +post.subject + '<br/>' + post.postDate  + '<br/>' + post.messageTextHtml;
       outerDiv.appendChild(myDiv);
+
+		// fix image source
+		const postId = post.url.split('/').pop();
+		const imgs = myDiv.getElementsByTagName("img");
+		for( const img of imgs ) {
+			if (img.src.includes("amazonaws.com")) {
+				const dprPostId = img.dataset.dprPostId ? img.dataset.dprPostId : postId;
+				img.src = `https://1.img-dpreview.com/files/p/TS560x560~forums/${dprPostId}/${img.dataset.dprFileId}`;
+				img.style.display = "block";
+
+				const fullSizeLink = document.createElement("a");
+	 			fullSizeLink.textContent = "Original size";
+				fullSizeLink.setAttribute("href", `https://1.img-dpreview.com/files/p/E~forums/${dprPostId}/${img.dataset.dprFileId}`);
+				fullSizeLink.setAttribute("target", "_blank");
+				fullSizeLink.style.display = "block";
+				img.parentElement.appendChild(fullSizeLink);
+			}
+		}
+
       const link = document.createElement('a');
       link.textContent = post.url;
       link.setAttribute("href",post.url);
