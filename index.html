@@ -43,7 +43,8 @@
   <body>
     <h1>DP-Display</h1>
     Drag-and-drop your dpreview-information-request.zip or extracted forums-post.json file here!
-    <div id="drop-area"></div>
+	  <p>Only forum-posts.json is displayed.
+	  <div id="drop-area"></div
 	or select it here:
     <p><input type="file" id="file-selector">
 	<div id="log"></div>
@@ -69,7 +70,13 @@ dropArea.addEventListener('drop', (event) => {
   const file=fileList[0];
   handleFile(file);
 });
-    
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    processFile();
+  }
+});
+
 const fileSelector = document.getElementById('file-selector');
 fileSelector.addEventListener('change', (event) => {
     const fileList = event.target.files;
@@ -79,27 +86,34 @@ fileSelector.addEventListener('change', (event) => {
 	handleFile(file);
 });
 
-var data;
 var distinctValues;
+var fileContents = "";
+var forumIndex;
 
 const logg = document.getElementById("log");
 
 async function handleFile(file) {
-	if( file.type === "application/zip" ) {
+	if( file.type === "application/zip" || file.type === "application/x-zip-compressed" ) {
 		try {
 			const zipContents = await JSZip.loadAsync(file);
-			const forumPosts = await zipContents.file("data/forum-posts.json").async("string");
-			processFile(forumPosts);
+			fileContents = await zipContents.file("data/forum-posts.json").async("string");
+			processFile();
 		} catch (e) {
 			logg.innerHTML="ERROR " + e;
 		}
-	} else {
+	} else if( file.type === "application/json" ) {
 		const reader = new FileReader();
 		reader.addEventListener('load', event => {
-			processFile(event.target.result);
+			fileContents = event.target.result;
+			processFile();
 		});
 		reader.readAsText(file);
+	} else {
+		logg.innerHTML = "<p><b>not a json or zip file";
+		myDiv.innerHTML = "";
+		forumDiv.innerHTML = "";
 	}
+	forumIndex = undefined;
 }
 
 const myDiv = document.createElement('div');
@@ -111,16 +125,15 @@ document.body.appendChild(forumDiv);
 
 const htmlList = document.createElement('ul');
 
-function processFile(fileContents) {
-
+function processFile() {
 	myDiv.innerHTML = "";
 	htmlList.innerHTML = "";
 	forumDiv.innerHTML = "";
 
-    data = JSON.parse(fileContents);
-    let list = data.forumPosts;
+    const data = JSON.parse(fileContents);
+    const forumPosts = data.forumPosts;
 
-    const distinctValues = [...new Set(list.map(item => item.forum))];
+    const distinctValues = [...new Set(forumPosts.map(item => item.forum))];
     //TODO: if #topicList exists, remove?  Or, perhaps after loading, remove #drop-area.
     myDiv.appendChild(htmlList);
     var index=0;
@@ -134,20 +147,31 @@ function processFile(fileContents) {
     htmlList.appendChild(li);
     });
 
-    
+	// redisplay if tab regained focus (visibility changed event)
+	expandForum(forumIndex);
+
+
     $(function() {
         $("#topicList ul li").click(function() {
           //alert(this.id);
             
           // clear out contents of previous list
           forumDiv.innerHTML = "";
-            
-          let list = data.forumPosts;
-          let index = this.id.substring("topic_".length);
+
+          forumIndex = this.id.substring("topic_".length);
+
+		  // display the selected forum
+          expandForum(forumIndex);
+        });
+    });
+
+	function expandForum(index) {
+		  if(!index) return;
+
           const subHeader = document.createElement('h2');
           subHeader.innerText = distinctValues[index];
           forumDiv.appendChild(subHeader);
-          list.filter(p => p.forum==distinctValues[index]).forEach(post => printPost(post, forumDiv));
+          forumPosts.filter(p => p.forum==distinctValues[index]).forEach(post => printPost(post, forumDiv));
 
           //switch img urls where a better attribute is present.  Check for current-owner, else it'll load other's images,
           //potentially transferring a lot more data.
@@ -168,23 +192,44 @@ function processFile(fileContents) {
                   //use the link to the external site
                   img.src = img.dataset.dprUrl;
                 }
+
                 //Remaining photos will attempt to load using img.src.
                 //A lot of the URLs need to be rebuilt with a different path plus a numeric user ID, 
                 //but the format isn't obvious.
-              }
+			}
           }
-        });
-        function printPost(post, outerDiv) {
-          const myDiv = document.createElement('div');
-          //Setting innerHTML isn't standard, but should work in most browsers anyway.
-          myDiv.innerHTML = '<hr/>' +post.subject + '<br/>' + post.postDate  + '<br/>' + post.messageTextHtml;
-          outerDiv.appendChild(myDiv);
-          const link = document.createElement('a');
-          link.textContent = post.url;
-          link.setAttribute("href",post.url);
-          outerDiv.appendChild(link);
-        }
-    });
+	}
+
+    function printPost(post, outerDiv) {
+      const myDiv = document.createElement('div');
+      //Setting innerHTML isn't standard, but should work in most browsers anyway.
+      myDiv.innerHTML = '<hr/>' +post.subject + '<br/>' + post.postDate  + '<br/>' + post.messageTextHtml;
+      outerDiv.appendChild(myDiv);
+
+		// fix image source
+		const postId = post.url.split('/').pop();
+		const imgs = myDiv.getElementsByTagName("img");
+		for( const img of imgs ) {
+			if (img.src.includes("amazonaws.com")) {
+				const dprPostId = img.dataset.dprPostId ? img.dataset.dprPostId : postId;
+				img.src = `https://1.img-dpreview.com/files/p/TS560x560~forums/${dprPostId}/${img.dataset.dprFileId}`;
+				img.style.display = "block";
+
+				const fullSizeLink = document.createElement("a");
+	 			fullSizeLink.textContent = "Original size";
+				fullSizeLink.setAttribute("href", `https://1.img-dpreview.com/files/p/E~forums/${dprPostId}/${img.dataset.dprFileId}`);
+				fullSizeLink.setAttribute("target", "_blank");
+				fullSizeLink.style.display = "block";
+				img.parentElement.appendChild(fullSizeLink);
+			}
+		}
+
+      const link = document.createElement('a');
+      link.textContent = post.url;
+      link.setAttribute("href",post.url);
+		link.setAttribute("target","dplost");
+      outerDiv.appendChild(link);
+    }
 }
 
 </script>
