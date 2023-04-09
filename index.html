@@ -211,13 +211,41 @@ function processFile() {
 		const imgs = myDiv.getElementsByTagName("img");
 		for( const img of imgs ) {
 			if (img.src.includes("amazonaws.com")) {
+
+
+        //In theory, if it's just a mirror, the number shouldn't matter, but...
+        let serverNumber = 1;
+        if (img.dataset.dprSrcType=='f') {
+          serverNumber=2;
+        }
+        else if (img.dataset.dprSrcType=='g') {
+          serverNumber=3;
+        }
+
 				const dprPostId = img.dataset.dprPostId ? img.dataset.dprPostId : postId;
-				img.src = `https://1.img-dpreview.com/files/p/TS560x560~forums/${dprPostId}/${img.dataset.dprFileId}`;
+
+        let postPath ="";
+        if (img.dataset.dprFileId != undefined) {
+          postPath = `/files/p/TS560x560~forums/${dprPostId}/${img.dataset.dprFileId}`;
+        }
+        else {
+          postPath = `${img.dataset.mceSrc}`; //this one includes "/files/g/TS...."
+        }
+        //could also use "dprLargeImageUrl", if exists.
+
+        //img.src = `https://${serverNumber}.img-dpreview.com/files/p/TS560x560~forums/${dprPostId}/${img.dataset.dprFileId}`;
+
+				img.src = `https://${serverNumber}.img-dpreview.com${postPath}`;
 				img.style.display = "block";
 
 				const fullSizeLink = document.createElement("a");
 	 			fullSizeLink.textContent = "Original size";
-				fullSizeLink.setAttribute("href", `https://1.img-dpreview.com/files/p/E~forums/${dprPostId}/${img.dataset.dprFileId}`);
+        if (img.dataset.dprClickthroughUrl!=undefined) {
+          fullSizeLink.setAttribute("href", `${img.dataset.dprClickthroughUrl}`);
+        }
+        else {
+          fullSizeLink.setAttribute("href", `https://${serverNumber}.img-dpreview.com/files/p/E~forums/${dprPostId}/${img.dataset.dprFileId}`);
+        }
 				fullSizeLink.setAttribute("target", "_blank");
 				fullSizeLink.style.display = "block";
 				img.parentElement.appendChild(fullSizeLink);
