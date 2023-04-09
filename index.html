@@ -172,32 +172,6 @@ function processFile() {
           subHeader.innerText = distinctValues[index];
           forumDiv.appendChild(subHeader);
           forumPosts.filter(p => p.forum==distinctValues[index]).forEach(post => printPost(post, forumDiv));
-
-          //switch img urls where a better attribute is present.  Check for current-owner, else it'll load other's images,
-          //potentially transferring a lot more data.
-          const images = document.images;
-          for (let i = 0; i < images.length; i++) {
-              const img = images[i];
-              //If img is inside a quote class, assume it's not ours.  Skip them.  
-              //Class-quote is used in older DPR messages, while blockquote is used in newer messages.
-              if (img.parentElement.parentElement.parentElement.className != 'quote' && 
-                img.parentElement.parentElement.parentElement.localName != 'blockquote') {
-                if (img.dataset.dprClickthroughUrl != undefined) {
-                  img.src = img.dataset.dprClickthroughUrl;
-				  img.width = "560";
-				  img.style.display = "block";
-                }
-                else 
-                if (img.dataset.dprUrl != undefined) {
-                  //use the link to the external site
-                  img.src = img.dataset.dprUrl;
-                }
-
-                //Remaining photos will attempt to load using img.src.
-                //A lot of the URLs need to be rebuilt with a different path plus a numeric user ID, 
-                //but the format isn't obvious.
-			}
-          }
 	}
 
     function printPost(post, outerDiv) {
@@ -210,6 +184,10 @@ function processFile() {
 		const postId = post.url.split('/').pop();
 		const imgs = myDiv.getElementsByTagName("img");
 		for( const img of imgs ) {
+            if (img.dataset.dprUrl != undefined) {
+              //use the link to the external site
+              img.src = img.dataset.dprUrl;
+            }
 			if (img.src.includes("amazonaws.com")) {
 
 
