@@ -41,6 +41,61 @@
 </head>
 
   <body>
+    <style>
+    body {
+      margin: 0;
+      padding: 0;
+      color: White;
+      background-color: #222;
+      background-repeat: no-repeat;
+      font-family: Open Sans,Helvetica,Arial,sans-serif;
+      font-size: 14px;
+    }
+    div.post {
+      background-color: white;
+      border-radius: 10px 10px 10px 10px;
+      padding: 15px 15px;
+      position: relative;
+      color: black;
+      width: 950px;
+    }
+    a {
+      color: #adf;
+    }
+    div.post a {
+      color: #28A;
+    }
+
+    div.post p ,  div.post div.quote {
+      margin-left: 10px;
+    }
+
+    blockquote blockquote blockquote blockquote blockquote blockquote {
+      border-left: 2px solid #888;
+      color: #888;
+    }
+    blockquote blockquote blockquote blockquote blockquote {
+        border-left: 2px solid #4096ee;
+        color: #4096ee;
+    }
+    blockquote blockquote blockquote blockquote {
+        border-left: 2px solid #909;
+        color: #909;
+    }
+    blockquote blockquote blockquote {
+      border-left: 2px solid #c79810;
+      color: #c79810;
+    }
+    blockquote blockquote, div.quote div.quote {
+      border-left: 2px solid #006e2e;
+      color: #006e2e;
+    } 
+    blockquote , div.quote {
+      border-left: 2px solid #c00;
+      color: #c00;
+    }
+    </style>
+
     <h1>DP-Display</h1>
     Drag-and-drop your dpreview-information-request.zip or extracted forums-post.json file here!
 	  <p>Only forum-posts.json is displayed.
@@ -176,8 +231,9 @@ function processFile() {
 
     function printPost(post, outerDiv) {
       const myDiv = document.createElement('div');
+      myDiv.setAttribute('class','post');
       //Setting innerHTML isn't standard, but should work in most browsers anyway.
-      myDiv.innerHTML = '<hr/>' +post.subject + '<br/>' + post.postDate  + '<br/>' + post.messageTextHtml;
+      myDiv.innerHTML = '<br/>' +post.subject + '<br/>' + post.postDate  + '<hr/>' + post.messageTextHtml;
       outerDiv.appendChild(myDiv);
 
 		// fix image source
@@ -193,36 +249,59 @@ function processFile() {
 
         //In theory, if it's just a mirror, the number shouldn't matter, but...
         let serverNumber = 1;
-        if (img.dataset.dprSrcType=='f') {
-          serverNumber=2;
-        }
-        else if (img.dataset.dprSrcType=='g') {
-          serverNumber=3;
-        }
+        //if (img.dataset.dprSrcType=='f') {
+        //  serverNumber=2;
+        //}
+        //else 
+        //if (img.dataset.dprSrcType=='g') {
+        //  serverNumber=3;
+        //}
 
 				const dprPostId = img.dataset.dprPostId ? img.dataset.dprPostId : postId;
 
+        //Find the path that leads us to the image
         let postPath ="";
         if (img.dataset.dprFileId != undefined) {
           postPath = `/files/p/TS560x560~forums/${dprPostId}/${img.dataset.dprFileId}`;
         }
-        else {
+        else 
+        if (img.dataset.mceSrc != undefined) {
           postPath = `${img.dataset.mceSrc}`; //this one includes "/files/g/TS...."
         }
+        else
+        if (img.dataset.dprGalleriesId != undefined) {
+          postPath = `/files/g/TS560x560~${img.dataset.dprGalleriesId}.jpg`;
+        }
+
         //could also use "dprLargeImageUrl", if exists.
 
         //img.src = `https://${serverNumber}.img-dpreview.com/files/p/TS560x560~forums/${dprPostId}/${img.dataset.dprFileId}`;
 
-				img.src = `https://${serverNumber}.img-dpreview.com${postPath}`;
+        if (postPath != "") {
+  				img.src = `https://${serverNumber}.img-dpreview.com${postPath}`;
+        }
 				img.style.display = "block";
 
 				const fullSizeLink = document.createElement("a");
 	 			fullSizeLink.textContent = "Original size";
-        if (img.dataset.dprClickthroughUrl!=undefined) {
+        if (img.dataset.dprClickthroughUrl!=undefined && img.dataset.dprClickthroughUrl.substring(0,4)=='http') {
           fullSizeLink.setAttribute("href", `${img.dataset.dprClickthroughUrl}`);
         }
-        else {
+        else 
+        if (img.dataset.dprClickthroughUrl!=undefined && img.dataset.dprSrcType=='g') {
+          fullSizeLink.setAttribute("href", `https://${serverNumber}.img-dpreview.com${img.dataset.dprClickthroughUrl}`);
+        }
+        else 
+        if (img.dataset.dprFileId != undefined) {
           fullSizeLink.setAttribute("href", `https://${serverNumber}.img-dpreview.com/files/p/E~forums/${dprPostId}/${img.dataset.dprFileId}`);
+        }
+        else
+        if (img.dataset.mceSrc != undefined) {
+          fullSizeLink.setAttribute("href", `https://${serverNumber}.img-dpreview.com${img.dataset.mceSrc}`);
+        }
+        else
+        if (img.dataset.dprGalleriesId != undefined) {
+          fullSizeLink.setAttribute("href", `https://${serverNumber}.img-dpreview.com/files/g/TS1120x1120~${img.dataset.dprGalleriesId}.jpg`);
         }
 				fullSizeLink.setAttribute("target", "_blank");
 				fullSizeLink.style.display = "block";
