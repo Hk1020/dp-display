@@ -182,12 +182,12 @@ function processFile() {
               //Class-quote is used in older DPR messages, while blockquote is used in newer messages.
               if (img.parentElement.parentElement.parentElement.className != 'quote' && 
                 img.parentElement.parentElement.parentElement.localName != 'blockquote') {
-                if (img.dataset.dprClickthroughUrl != undefined) {
-                  img.src = img.dataset.dprClickthroughUrl;
-				  img.width = "560";
-				  img.style.display = "block";
-                }
-                else 
+                //if (img.dataset.dprClickthroughUrl != undefined) {
+                //  img.src = img.dataset.dprClickthroughUrl;
+                //img.width = "560";
+                //img.style.display = "block";
+                //}
+                //else 
                 if (img.dataset.dprUrl != undefined) {
                   //use the link to the external site
                   img.src = img.dataset.dprUrl;
@@ -215,36 +215,59 @@ function processFile() {
 
         //In theory, if it's just a mirror, the number shouldn't matter, but...
         let serverNumber = 1;
-        if (img.dataset.dprSrcType=='f') {
-          serverNumber=2;
-        }
-        else if (img.dataset.dprSrcType=='g') {
-          serverNumber=3;
-        }
+        //if (img.dataset.dprSrcType=='f') {
+        //  serverNumber=2;
+        //}
+        //else 
+        //if (img.dataset.dprSrcType=='g') {
+        //  serverNumber=3;
+        //}
 
 				const dprPostId = img.dataset.dprPostId ? img.dataset.dprPostId : postId;
 
+        //Find the path that leads us to the image
         let postPath ="";
         if (img.dataset.dprFileId != undefined) {
           postPath = `/files/p/TS560x560~forums/${dprPostId}/${img.dataset.dprFileId}`;
         }
-        else {
+        else 
+        if (img.dataset.mceSrc != undefined) {
           postPath = `${img.dataset.mceSrc}`; //this one includes "/files/g/TS...."
         }
+        else
+        if (img.dataset.dprGalleriesId != undefined) {
+          postPath = `/files/g/TS560x560~${img.dataset.dprGalleriesId}.jpg`;
+        }
+
         //could also use "dprLargeImageUrl", if exists.
 
         //img.src = `https://${serverNumber}.img-dpreview.com/files/p/TS560x560~forums/${dprPostId}/${img.dataset.dprFileId}`;
 
-				img.src = `https://${serverNumber}.img-dpreview.com${postPath}`;
+        if (postPath != "") {
+  				img.src = `https://${serverNumber}.img-dpreview.com${postPath}`;
+        }
 				img.style.display = "block";
 
 				const fullSizeLink = document.createElement("a");
 	 			fullSizeLink.textContent = "Original size";
-        if (img.dataset.dprClickthroughUrl!=undefined) {
+        if (img.dataset.dprClickthroughUrl!=undefined && img.dataset.dprClickthroughUrl.substring(0,4)=='http') {
           fullSizeLink.setAttribute("href", `${img.dataset.dprClickthroughUrl}`);
         }
-        else {
+        else 
+        if (img.dataset.dprClickthroughUrl!=undefined && img.dataset.dprSrcType=='g') {
+          fullSizeLink.setAttribute("href", `https://${serverNumber}.img-dpreview.com${img.dataset.dprClickthroughUrl}`);
+        }
+        else 
+        if (img.dataset.dprFileId != undefined) {
           fullSizeLink.setAttribute("href", `https://${serverNumber}.img-dpreview.com/files/p/E~forums/${dprPostId}/${img.dataset.dprFileId}`);
+        }
+        else
+        if (img.dataset.mceSrc != undefined) {
+          fullSizeLink.setAttribute("href", `https://${serverNumber}.img-dpreview.com${img.dataset.mceSrc}`);
+        }
+        else
+        if (img.dataset.dprGalleriesId != undefined) {
+          fullSizeLink.setAttribute("href", `https://${serverNumber}.img-dpreview.com/files/g/TS1120x1120~${img.dataset.dprGalleriesId}.jpg`);
         }
 				fullSizeLink.setAttribute("target", "_blank");
 				fullSizeLink.style.display = "block";
