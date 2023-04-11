@@ -37,6 +37,7 @@
 
 	  .selected { font-weight:bold; }
 	  .selected a { color:white; }
+	  .cheader { margin-top:2em; margin-bottom:0.5em; }
     </style>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -100,9 +101,9 @@
     </style>
 
     <h1>DP-Display</h1>
-    Drag-and-drop your dpreview-information-request.zip or extracted forums-post.json file here!
-	  <p>Only forum-posts.json is displayed.
-	  <div id="drop-area"></div
+    Drag-and-drop your <b><u>dpreview-information-request.zip</u></b> or extracted json file here!
+    <p>Only <b><u>forum-posts.json</u></b> and/or <b><u>comments.json</u></b> are  displayed.
+    <div id="drop-area"></div>
 	or select it here:
     <p><input type="file" id="file-selector">
 	<div id="log"></div>
@@ -151,10 +152,18 @@ var forumIndex;
 const logg = document.getElementById("log");
 
 async function handleFile(file) {
+	myDiv.innerHTML = "";
+	htmlList.innerHTML = "";
+	forumDiv.innerHTML = "";
+	commentsDiv.innerHTML = "";
+
 	if( file.type === "application/zip" || file.type === "application/x-zip-compressed" ) {
 		try {
 			const zipContents = await JSZip.loadAsync(file);
 			fileContents = await zipContents.file("data/forum-posts.json").async("string");
+			processFile();
+
+			fileContents = await zipContents.file("data/comments.json").async("string");
 			processFile();
 		} catch (e) {
 			logg.innerHTML="ERROR " + e;
@@ -181,19 +190,67 @@ document.body.appendChild(myDiv);
 const forumDiv = document.createElement('div');
 document.body.appendChild(forumDiv);
 
+const commentsDiv = document.createElement('div');
+document.body.appendChild(commentsDiv);
+
 const htmlList = document.createElement('ul');
 
 function processFile() {
-	myDiv.innerHTML = "";
-	htmlList.innerHTML = "";
-	forumDiv.innerHTML = "";
-
     const data = JSON.parse(fileContents);
     const forumPosts = data.forumPosts;
+	const comments = data.comments;
 
-    const distinctValues = [...new Set(forumPosts.map(item => item.forum))];
+	if( forumPosts ) {
+		processForumPosts(forumPosts);
+	} else if (comments) {
+		processComments(comments);
+	}
+}
+
+function processComments(comments) {
+	const subHeader = document.createElement('h1');
+	subHeader.innerText = 'Comments';
+	subHeader.setAttribute('id','comments');
+	commentsDiv.appendChild(subHeader);
+
+    const distinctValues = [...new Set(comments.map(item => item.contentTitle))];
+	distinctValues.forEach( cTitle => {
+		const header = document.createElement('h3');
+		header.innerText = `${cTitle}`;
+		header.classList.add('cheader');
+		commentsDiv.appendChild(header);
+
+		let lastTitle;
+		comments.filter(c => c.contentTitle === cTitle).forEach(comment => {
+			if( comment.contentTitle !== lastTitle ) {
+				const link = document.createElement('a');
+				link.textContent = comment.contentUrl;
+				link.setAttribute("href",comment.contentUrl);
+				link.setAttribute("target","dplost");
+				commentsDiv.appendChild(link);
+			}
+			lastTitle = comment.contentTitle;
+
+			printComment(comment,commentsDiv);
+		});
+	});
+}
+
+function processForumPosts(forumPosts) {
+
+	const distinctValues = [...new Set(forumPosts.map(item => item.forum))];
     //TODO: if #topicList exists, remove?  Or, perhaps after loading, remove #drop-area.
     myDiv.appendChild(htmlList);
+
+	const li = document.createElement('li');
+    const link = document.createElement('a');
+    link.textContent = 'go to comments';
+    link.setAttribute("href","#comments");
+    li.appendChild(link);
+	const space = document.createElement('p');
+	li.appendChild(space);
+    htmlList.appendChild(li);
+
     var index=0;
     distinctValues.forEach(key => {
     const li = document.createElement('li');
@@ -323,7 +380,13 @@ function processFile() {
     }
 }
 
-</script>
+function printComment(post, outerDiv) {
+	const myDiv = document.createElement('div');
+	myDiv.innerHTML = `<hr/>${post.datePostedUtc} UTC <br/> ${post.commentText}`;
+	myDiv.setAttribute("class","post");
+	outerDiv.appendChild(myDiv);
+}
 
+</script>
     
 </body>
