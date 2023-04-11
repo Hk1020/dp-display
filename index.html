@@ -34,6 +34,9 @@
         width: 440px;
         height: 272px;
       }
+
+	  .selected { font-weight:bold; }
+	  .selected a { color:white; }
     </style>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -210,6 +213,9 @@ function processFile() {
         $("#topicList ul li").click(function() {
           //alert(this.id);
             
+		  htmlList.childNodes.forEach(l=>l.classList.remove('selected'));
+		  this.classList.add('selected');
+
           // clear out contents of previous list
           forumDiv.innerHTML = "";
 
