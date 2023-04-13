@@ -179,7 +179,6 @@ async function handleFile(file) {
 	topicList.innerHTML = "";
 	htmlList.innerHTML = "";
 	forumDiv.innerHTML = "";
-	commentsDiv.innerHTML = "";
 
 	if( file.type === "application/zip" || file.type === "application/x-zip-compressed" ) {
 		try {
@@ -222,40 +221,28 @@ function processFile() {
 }
 
 function processComments(comments) {
-	commentsDiv.innerHTML = "";
-	const subHeader = document.createElement('h1');
-	subHeader.innerText = 'Comments';
-	subHeader.setAttribute('id','comments');
-	commentsDiv.appendChild(subHeader);
+  commentsDiv.innerHTML = '<h1 id="comments">Comments</h1>';
 
-    const distinctValues = [...new Set(comments.map(item => item.contentTitle))];
-	distinctValues.forEach( cTitle => {
-		const header = document.createElement('h3');
-		header.innerText = `${cTitle}`;
-		header.classList.add('cheader');
-		commentsDiv.appendChild(header);
+  const distinctValues = [...new Set(comments.map(item => item.contentTitle))];
+  distinctValues.forEach(cTitle => {
+    commentsDiv.innerHTML += `<h3 class="cheader">${cTitle}</h3>`;
 
-		let lastTitle;
-		comments.filter(c => c.contentTitle === cTitle).forEach(comment => {
-			if( comment.contentTitle !== lastTitle ) {
-				const link = document.createElement('a');
-				link.textContent = comment.contentUrl;
-				link.setAttribute("href",comment.contentUrl);
-				link.setAttribute("target","dplost");
-				commentsDiv.appendChild(link);
-			}
-			lastTitle = comment.contentTitle;
+    let lastTitle;
+    comments.filter(c => c.contentTitle === cTitle).forEach(comment => {
+      if (comment.contentTitle !== lastTitle) {
+        commentsDiv.innerHTML += `<a href="${comment.contentUrl}" target="dplost">${comment.contentUrl}</a>`;
+      }
+      lastTitle = comment.contentTitle;
 
-			printComment(comment,commentsDiv);
-		});
-	});
+      printComment(comment, commentsDiv);
+    });
+  });
 }
 
 function processForumPosts(forumPosts) {
 	topicList.innerHTML = "";
 	htmlList.innerHTML = "";
 	forumDiv.innerHTML = "";
-
 
 	const distinctValues = [...new Set(forumPosts.map(item => item.forum))];
     //TODO: if #topicList exists, remove?  Or, perhaps after loading, remove #drop-area.
