@@ -34,6 +34,27 @@
         width: 440px;
         height: 272px;
       }
+
+			.selected { font-weight:bold; }
+			.selected a { color:white; }
+			.cheader { margin-top:2em; margin-bottom:0.5em; }
+
+			.exif td:first-child { text-transform:capitalize; }
+			img:hover ~ .exif, .exif:hover { display:block; }
+			.exif {
+				display:none;
+				position:absolute;
+				left:0.5em;
+				bottom:0.5em;
+				padding:10px;
+				background-color:rgba(0,0,0,0.7);
+				color:white;
+				font-size:0.7em;
+				border-radius: 10px 10px 10px 10px;
+			}
+			.caption { background-color:#ddd; display:block; padding:8px 10px; width:540px; }
+			.imageParagraph { display:block; position:relative; }
+			.imageParagraph img { }
     </style>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -48,7 +69,6 @@
       background-color: #222;
       background-repeat: no-repeat;
       font-family: Open Sans,Helvetica,Arial,sans-serif;
-      font-size: 14px;
     }
     div.post {
       background-color: white;
@@ -57,6 +77,7 @@
       position: relative;
       color: black;
       width: 950px;
+      margin-top:1.5em;
     }
     a {
       color: #adf;
@@ -66,7 +87,7 @@
     }
 
     div.post p ,  div.post div.quote {
-      margin-left: 10px;
+      margin-left: 1em;
     }
 
     blockquote blockquote blockquote blockquote blockquote blockquote {
@@ -92,13 +113,14 @@
     blockquote , div.quote {
       border-left: 2px solid #c00;
       color: #c00;
+      margin-left: 1em;
     }
     </style>
 
     <h1>DP-Display</h1>
-    Drag-and-drop your dpreview-information-request.zip or extracted forums-post.json file here!
-	  <p>Only forum-posts.json is displayed.
-	  <div id="drop-area"></div
+    Drag-and-drop your <b><u>dpreview-information-request.zip</u></b> or extracted json file here!
+    <p>Only <b><u>forum-posts.json</u></b> and/or <b><u>comments.json</u></b> are  displayed.
+    <div id="drop-area"></div>
 	or select it here:
     <p><input type="file" id="file-selector">
 	<div id="log"></div>
@@ -147,10 +169,18 @@ var forumIndex;
 const logg = document.getElementById("log");
 
 async function handleFile(file) {
+	myDiv.innerHTML = "";
+	htmlList.innerHTML = "";
+	forumDiv.innerHTML = "";
+	commentsDiv.innerHTML = "";
+
 	if( file.type === "application/zip" || file.type === "application/x-zip-compressed" ) {
 		try {
 			const zipContents = await JSZip.loadAsync(file);
 			fileContents = await zipContents.file("data/forum-posts.json").async("string");
+			processFile();
+
+			fileContents = await zipContents.file("data/comments.json").async("string");
 			processFile();
 		} catch (e) {
 			logg.innerHTML="ERROR " + e;
@@ -177,19 +207,67 @@ document.body.appendChild(myDiv);
 const forumDiv = document.createElement('div');
 document.body.appendChild(forumDiv);
 
+const commentsDiv = document.createElement('div');
+document.body.appendChild(commentsDiv);
+
 const htmlList = document.createElement('ul');
 
 function processFile() {
-	myDiv.innerHTML = "";
-	htmlList.innerHTML = "";
-	forumDiv.innerHTML = "";
-
     const data = JSON.parse(fileContents);
     const forumPosts = data.forumPosts;
+	const comments = data.comments;
 
-    const distinctValues = [...new Set(forumPosts.map(item => item.forum))];
+	if( forumPosts ) {
+		processForumPosts(forumPosts);
+	} else if (comments) {
+		processComments(comments);
+	}
+}
+
+function processComments(comments) {
+	const subHeader = document.createElement('h1');
+	subHeader.innerText = 'Comments';
+	subHeader.setAttribute('id','comments');
+	commentsDiv.appendChild(subHeader);
+
+    const distinctValues = [...new Set(comments.map(item => item.contentTitle))];
+	distinctValues.forEach( cTitle => {
+		const header = document.createElement('h3');
+		header.innerText = `${cTitle}`;
+		header.classList.add('cheader');
+		commentsDiv.appendChild(header);
+
+		let lastTitle;
+		comments.filter(c => c.contentTitle === cTitle).forEach(comment => {
+			if( comment.contentTitle !== lastTitle ) {
+				const link = document.createElement('a');
+				link.textContent = comment.contentUrl;
+				link.setAttribute("href",comment.contentUrl);
+				link.setAttribute("target","dplost");
+				commentsDiv.appendChild(link);
+			}
+			lastTitle = comment.contentTitle;
+
+			printComment(comment,commentsDiv);
+		});
+	});
+}
+
+function processForumPosts(forumPosts) {
+
+	const distinctValues = [...new Set(forumPosts.map(item => item.forum))];
     //TODO: if #topicList exists, remove?  Or, perhaps after loading, remove #drop-area.
     myDiv.appendChild(htmlList);
+
+	const li = document.createElement('li');
+    const link = document.createElement('a');
+    link.textContent = 'go to comments';
+    link.setAttribute("href","#comments");
+    li.appendChild(link);
+	const space = document.createElement('p');
+	li.appendChild(space);
+    htmlList.appendChild(li);
+
     var index=0;
     distinctValues.forEach(key => {
     const li = document.createElement('li');
@@ -209,6 +287,9 @@ function processFile() {
         $("#topicList ul li").click(function() {
           //alert(this.id);
             
+		  htmlList.childNodes.forEach(l=>l.classList.remove('selected'));
+		  this.classList.add('selected');
+
           // clear out contents of previous list
           forumDiv.innerHTML = "";
 
@@ -304,19 +385,55 @@ function processFile() {
         }
 				fullSizeLink.setAttribute("target", "_blank");
 				fullSizeLink.style.display = "block";
-				img.parentElement.appendChild(fullSizeLink);
-			}
+				img.parentElement.parentElement.appendChild(fullSizeLink);
+
+				const exifDiv = document.createElement('div');
+				exifDiv.classList.add('exif');
+				try {
+					const exif = JSON.parse(img.dataset.dprExif);
+
+					const table = document.createElement('TABLE');
+					const tableBody = document.createElement('TBODY');
+					table.appendChild(tableBody);
+
+					const shutterSpeed = `${exif.shutterSpeedNumerator}${exif.shutterSpeedDenominator !== 1 ? `/${exif.shutterSpeedDenominator}` : ""} sec`;
+					delete exif.shutterSpeedNumerator;
+					for (let [key, value] of Object.entries(exif)) {
+						if(!value) continue;
+						if( key.match(/shutterSpeed/) ) {
+							key = 'Shutter speed';
+							value = shutterSpeed;
+						}
+						if( key == "aperture" ) value = `f/${value}`;
+						if( key == "focalLength" ) value = `${value} mm`;
+						key = key.replace(/([A-Z])/," $1");
+						tableBody.innerHTML += `<tr><td>${key}:</td><td>${value}</td></tr>`;
+					}
+
+					exifDiv.appendChild(table);
+				} catch (e) {
+					exifDiv.innerHTML = 'No EXIF data';
+					console.log(e);
+				}
+				img.parentElement.appendChild(exifDiv);
+				}
 		}
 
       const link = document.createElement('a');
       link.textContent = post.url;
       link.setAttribute("href",post.url);
-		link.setAttribute("target","dplost");
+			link.setAttribute("target","dplost");
       outerDiv.appendChild(link);
     }
 }
 
-</script>
+function printComment(post, outerDiv) {
+	const myDiv = document.createElement('div');
+	myDiv.innerHTML = `<hr/>${post.datePostedUtc} UTC <br/> ${post.commentText}`;
+	myDiv.setAttribute("class","post");
+	outerDiv.appendChild(myDiv);
+}
 
+</script>
     
 </body>
