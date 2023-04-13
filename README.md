@@ -14,7 +14,7 @@ Dp-display (index.html) is a local web page that allows you to drag-and-drop you
 ## Limitations:
 
 - There could be better formatting.
-- Readers have not been created for the other .json files, only forum-posts.json.
+- Readers have not been created for the other .json files, only forum-posts.json and comments.json.
 - Only forum-posts.json is currently supported. Support is needed for the other .json files
 
 ## License
