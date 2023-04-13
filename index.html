@@ -225,6 +225,7 @@ function processFile() {
 }
 
 function processComments(comments) {
+	commentsDiv.innerHTML = "";
 	const subHeader = document.createElement('h1');
 	subHeader.innerText = 'Comments';
 	subHeader.setAttribute('id','comments');
@@ -254,6 +255,10 @@ function processComments(comments) {
 }
 
 function processForumPosts(forumPosts) {
+	myDiv.innerHTML = "";
+	htmlList.innerHTML = "";
+	forumDiv.innerHTML = "";
+
 
 	const distinctValues = [...new Set(forumPosts.map(item => item.forum))];
     //TODO: if #topicList exists, remove?  Or, perhaps after loading, remove #drop-area.
