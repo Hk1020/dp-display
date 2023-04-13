@@ -124,6 +124,9 @@
 	or select it here:
     <p><input type="file" id="file-selector">
 	<div id="log"></div>
+	<div id="topicList"></div>
+	<div id="forumDiv"></div>
+	<div id="commentsDiv"></div>
 <script>
 
 const dropArea = document.getElementById('drop-area');
@@ -166,10 +169,14 @@ var distinctValues;
 var fileContents = "";
 var forumIndex;
 
+const topicList = document.getElementById("topicList");
+const forumDiv = document.getElementById("forumDiv");
+const commentsDiv = document.getElementById("commentsDiv");
+
 const logg = document.getElementById("log");
 
 async function handleFile(file) {
-	myDiv.innerHTML = "";
+	topicList.innerHTML = "";
 	htmlList.innerHTML = "";
 	forumDiv.innerHTML = "";
 	commentsDiv.innerHTML = "";
@@ -194,21 +201,11 @@ async function handleFile(file) {
 		reader.readAsText(file);
 	} else {
 		logg.innerHTML = "<p><b>not a json or zip file";
-		myDiv.innerHTML = "";
+		topicList.innerHTML = "";
 		forumDiv.innerHTML = "";
 	}
 	forumIndex = undefined;
 }
-
-const myDiv = document.createElement('div');
-myDiv.setAttribute('id','topicList');
-document.body.appendChild(myDiv);
-
-const forumDiv = document.createElement('div');
-document.body.appendChild(forumDiv);
-
-const commentsDiv = document.createElement('div');
-document.body.appendChild(commentsDiv);
 
 const htmlList = document.createElement('ul');
 
@@ -255,14 +252,14 @@ function processComments(comments) {
 }
 
 function processForumPosts(forumPosts) {
-	myDiv.innerHTML = "";
+	topicList.innerHTML = "";
 	htmlList.innerHTML = "";
 	forumDiv.innerHTML = "";
 
 
 	const distinctValues = [...new Set(forumPosts.map(item => item.forum))];
     //TODO: if #topicList exists, remove?  Or, perhaps after loading, remove #drop-area.
-    myDiv.appendChild(htmlList);
+    topicList.appendChild(htmlList);
 
 	const li = document.createElement('li');
     const link = document.createElement('a');
