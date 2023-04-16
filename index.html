@@ -165,7 +165,6 @@ fileSelector.addEventListener('change', (event) => {
 	handleFile(file);
 });
 
-var distinctValues;
 var fileContents = "";
 var forumIndex;
 
@@ -176,55 +175,50 @@ const commentsDiv = document.getElementById("commentsDiv");
 const logg = document.getElementById("log");
 
 async function handleFile(file) {
-	topicList.innerHTML = "";
-	htmlList.innerHTML = "";
-	forumDiv.innerHTML = "";
+  topicList.innerHTML = "";
+  forumDiv.innerHTML = "";
+  commentsDiv.innerHTML = "";
 
-	if( file.type === "application/zip" || file.type === "application/x-zip-compressed" ) {
-		try {
-			const zipContents = await JSZip.loadAsync(file);
-			fileContents = await zipContents.file("data/forum-posts.json").async("string");
-			processFile();
+  if (file.type === "application/zip" || file.type === "application/x-zip-compressed") {
+    try {
+      const zipContents = await JSZip.loadAsync(file);
 
-			fileContents = await zipContents.file("data/comments.json").async("string");
-			processFile();
-		} catch (e) {
-			logg.innerHTML="ERROR " + e;
-		}
-	} else if( file.type === "application/json" ) {
-		const reader = new FileReader();
-		reader.addEventListener('load', event => {
-			fileContents = event.target.result;
-			processFile();
-		});
-		reader.readAsText(file);
-	} else {
-		logg.innerHTML = "<p><b>not a json or zip file";
-		topicList.innerHTML = "";
-		forumDiv.innerHTML = "";
-	}
-	forumIndex = undefined;
+      fileContents = JSON.parse(await zipContents.file("data/forum-posts.json").async("string"));
+      fileContents = { ...fileContents, ...JSON.parse(await zipContents.file("data/comments.json").async("string")) };
+      processFile();
+
+    } catch (e) {
+      logg.innerHTML = "ERROR " + e;
+    }
+  } else if (file.type === "application/json") {
+    const reader = new FileReader();
+    reader.addEventListener('load', event => {
+      fileContents = JSON.parse(event.target.result);
+      processFile();
+    });
+    reader.readAsText(file);
+  } else {
+    logg.innerHTML = "<p><b>not a json or zip file";
+    topicList.innerHTML = "";
+    forumDiv.innerHTML = "";
+  }
+  forumIndex = undefined;
 }
 
-const htmlList = document.createElement('ul');
 
 function processFile() {
-    const data = JSON.parse(fileContents);
-    const forumPosts = data.forumPosts;
-	const comments = data.comments;
-
-	if( forumPosts ) {
-		processForumPosts(forumPosts);
-	} else if (comments) {
-		processComments(comments);
-	}
+  processForumPosts();
+	processComments();
 }
 
-function processComments(comments) {
+function processComments() {
+  const comments = fileContents.comments;
+  if (!comments) return;
+
   commentsDiv.innerHTML = '<h1 id="comments">Comments</h1>';
 
-  const distinctValues = [...new Set(comments.map(item => item.contentTitle))];
-  distinctValues.forEach(cTitle => {
+  const commentTitles = new Set(comments.map(item => item.contentTitle));
+  commentTitles.forEach(cTitle => {
     commentsDiv.innerHTML += `<h3 class="cheader">${cTitle}</h3>`;
 
     let lastTitle;
@@ -239,23 +233,23 @@ function processComments(comments) {
   });
 }
 
-function processForumPosts(forumPosts) {
+function processForumPosts() {
+  const forumPosts = fileContents.forumPosts;
+  if( !forumPosts ) return;
+
 	topicList.innerHTML = "";
-	htmlList.innerHTML = "";
 	forumDiv.innerHTML = "";
+  const htmlList = document.createElement('ul');
 
 	const distinctValues = [...new Set(forumPosts.map(item => item.forum))];
     //TODO: if #topicList exists, remove?  Or, perhaps after loading, remove #drop-area.
     topicList.appendChild(htmlList);
 
-	const li = document.createElement('li');
-    const link = document.createElement('a');
-    link.textContent = 'go to comments';
-    link.setAttribute("href","#comments");
-    li.appendChild(link);
-	const space = document.createElement('p');
-	li.appendChild(space);
+  if (fileContents.comments) {
+    const li = document.createElement('li');
+    li.innerHTML = '<a href="#comments">go to comments</a><p>';
     htmlList.appendChild(li);
+  }
 
     var index=0;
     distinctValues.forEach(key => {
