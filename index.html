@@ -121,7 +121,7 @@
     <p>Only <b><u>forum-posts.json</u></b> and/or <b><u>comments.json</u></b> are  displayed.
     <div id="drop-area"></div>
 	or select it here:
-    <p><input type="file" id="file-selector">
+    <p><input type="file" id="file-selector" multiple>
 	<div id="log"></div>
 	<div id="topicList"></div>
 	<div id="forumDiv"></div>
@@ -145,8 +145,7 @@ dropArea.addEventListener('drop', (event) => {
   const fileList = event.dataTransfer.files;
   console.log(fileList);
 
-  const file=fileList[0];
-  handleFile(file);
+  handleFile(fileList);
 });
 
 document.addEventListener("visibilitychange", () => {
@@ -160,11 +159,10 @@ fileSelector.addEventListener('change', (event) => {
     const fileList = event.target.files;
     console.log(fileList);
 
-    const file=fileList[0];
-	handleFile(file);
+  	handleFile(fileList);
 });
 
-var fileContents = "";
+var fileContents;
 var forumIndex;
 
 const topicList = document.getElementById("topicList");
@@ -173,34 +171,37 @@ const commentsDiv = document.getElementById("commentsDiv");
 
 const logg = document.getElementById("log");
 
-async function handleFile(file) {
+async function handleFile(files) {
+  logg.innerHTML = "";
+  fileContents = {};
+  
+  for (const file of files) {
+    if (file.type === "application/zip" || file.type === "application/x-zip-compressed") {
+      try {
+        const zipContents = await JSZip.loadAsync(file);
+
+        fileContents = { ...fileContents, ...JSON.parse(await zipContents.file("data/forum-posts.json").async("string")) };
+        fileContents = { ...fileContents, ...JSON.parse(await zipContents.file("data/comments.json").async("string")) };
+      } catch (e) {
+        logg.innerHTML += "ERROR " + e;
+      }
+    } else if (file.type === "application/json") {
+      const jsonText = await file.text();
+      fileContents = { ...fileContents, ...JSON.parse(jsonText) };
+
+    } else {
+      logg.innerHTML += `<p><b>not a json or zip file: ${file.name}`;
+    }
+  };
+
   topicList.innerHTML = "";
   forumDiv.innerHTML = "";
   commentsDiv.innerHTML = "";
 
-  if (file.type === "application/zip" || file.type === "application/x-zip-compressed") {
-    try {
-      const zipContents = await JSZip.loadAsync(file);
+  if( logg.innerHTML !== "" ) return;
 
-      fileContents = JSON.parse(await zipContents.file("data/forum-posts.json").async("string"));
-      fileContents = { ...fileContents, ...JSON.parse(await zipContents.file("data/comments.json").async("string")) };
-      processFile();
+  processFile();
 
-    } catch (e) {
-      logg.innerHTML = "ERROR " + e;
-    }
-  } else if (file.type === "application/json") {
-    const reader = new FileReader();
-    reader.addEventListener('load', event => {
-      fileContents = JSON.parse(event.target.result);
-      processFile();
-    });
-    reader.readAsText(file);
-  } else {
-    logg.innerHTML = "<p><b>not a json or zip file";
-    topicList.innerHTML = "";
-    forumDiv.innerHTML = "";
-  }
   forumIndex = undefined;
 }
 
