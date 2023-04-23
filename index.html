@@ -123,6 +123,7 @@
 	or select it here:
     <p><input type="file" id="file-selector" multiple>
 	<div id="log"></div>
+  <div id="userInfo"></div>
 	<div id="topicList"></div>
 	<div id="forumDiv"></div>
 	<div id="commentsDiv"></div>
@@ -165,6 +166,7 @@ fileSelector.addEventListener('change', (event) => {
 var fileContents;
 var forumIndex;
 
+const userInfo = document.getElementById("userInfo");
 const topicList = document.getElementById("topicList");
 const forumDiv = document.getElementById("forumDiv");
 const commentsDiv = document.getElementById("commentsDiv");
@@ -182,6 +184,7 @@ async function handleFile(files) {
 
         fileContents = { ...fileContents, ...JSON.parse(await zipContents.file("data/forum-posts.json").async("string")) };
         fileContents = { ...fileContents, ...JSON.parse(await zipContents.file("data/comments.json").async("string")) };
+        fileContents = { ...fileContents, ...JSON.parse(await zipContents.file("data/user-info.json").async("string")) };
       } catch (e) {
         logg.innerHTML += "ERROR " + e;
       }
@@ -194,6 +197,7 @@ async function handleFile(files) {
     }
   };
 
+  userInfo.innerHTML = "";
   topicList.innerHTML = "";
   forumDiv.innerHTML = "";
   commentsDiv.innerHTML = "";
@@ -207,8 +211,15 @@ async function handleFile(files) {
 
 
 function processFile() {
+  processUserInfo();
   processForumPosts();
 	processComments();
+}
+
+function processUserInfo() {
+  if(!fileContents.userName) return;
+  const joined = new Date(Date.parse(fileContents.dateJoined));
+  userInfo.innerHTML = `<h2>${fileContents.userName}</h2>joined on <b>${joined.toDateString().substring(3).replace(/( ....)$/,', $1')}`;
 }
 
 function processComments() {
