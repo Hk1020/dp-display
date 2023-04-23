@@ -219,12 +219,11 @@ function processComments() {
 
   const commentTitles = new Set(comments.map(item => item.contentTitle));
   commentTitles.forEach(cTitle => {
-    commentsDiv.innerHTML += `<h3 class="cheader">${cTitle}</h3>`;
-
     let lastTitle;
     comments.filter(c => c.contentTitle === cTitle).forEach(comment => {
       if (comment.contentTitle !== lastTitle) {
-        commentsDiv.innerHTML += `<a href="${comment.contentUrl}" target="dplost">${comment.contentUrl}</a>`;
+        const type = comment.contentUrl.includes("challenge") ? "photo" : "article";
+        commentsDiv.innerHTML += `<h3 class="cheader">On ${type} <a href="${comment.contentUrl}" target="dplost">${cTitle}</a></h3>`;
       }
       lastTitle = comment.contentTitle;
 
