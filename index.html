@@ -54,6 +54,114 @@
 			}
 			.caption { background-color:#ddd; display:block; padding:8px 10px; width:540px; }
 			.imageParagraph { display:block; position:relative; }
+
+      /* Style the buttons that are used to open and close the accordion panel */
+      .accordion {
+        background-color: #eee;
+        color: #444;
+        cursor: pointer;
+        font-weight: bold;
+        padding: 10px;
+        width: 100%;
+        text-align: left;
+        border: none;
+        border-radius: 5px;
+        outline: none;
+        width: 950px;
+      }
+      .active, .accordion:hover { background-color: #ccc; }
+      .active { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+      .panel {
+        padding: 0 18px;
+        background-color: white;
+        color: black;
+        display: none;
+        overflow: hidden;
+        width: 950px;
+        box-sizing: border-box;
+        position: relative;
+      }
+      .active + .panel {display:block;}
+      .accordion:after {
+        content: '\02795'; /* Unicode character for "plus" sign (+) */
+        font-size: 13px;
+        color: #777;
+        float: right;
+        margin-left: 5px;
+      }
+      .active:after {
+        content: "\2796"; /* Unicode character for "minus" sign (-) */
+      }
+
+      /* Chat containers */
+      .container {
+        border: 2px solid #dedede;
+        background-color: #f1f1f1;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 10px 0;
+      }
+
+      /* Darker chat container */
+      .container.right {
+        border-color: #ccc;
+        background-color: #ddd;
+        margin-left: 7em;
+      }
+
+      .container.left {
+        margin-right: 7em;
+      }
+
+      /* Clear floats */
+      .container::after {
+        content: "";
+        clear: both;
+        display: table;
+      }
+
+      /* Style chat user */
+      span.from {
+        max-width: 7em;
+        position:absolute;
+        width: 100%;
+        font-weight: bold;
+        word-break: break-word;
+      }
+      .left span.from {
+        right:0;
+        margin-left: 10px;
+        margin-right: 0;
+      }
+      .right span.from {
+        left: 0;
+        text-align: right;
+      }
+       /* call out notch: */
+      span.from::after {
+        content: "";
+        position: absolute;
+        top: -10px;
+        right: -20px;
+        border-width: 20px;
+        border-style: solid;
+        border-color: transparent #ddd transparent transparent;
+      }
+      .left span.from::after {
+        left: -20px;
+        border-color: transparent transparent transparent #f1f1f1;
+      }
+
+      /* time in chat: */
+      .right span.time {
+        float: right;
+        color: #888;
+        text-align: right;
+      }
+      .left span.time {
+        float: left;
+        color: #999;
+      }
     </style>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -65,6 +173,7 @@
       margin: 0;
       padding: 0;
       color: White;
+      font-size: 0.9em;
       background-color: #222;
       background-repeat: no-repeat;
       font-family: Open Sans,Helvetica,Arial,sans-serif;
@@ -77,6 +186,7 @@
       color: black;
       width: 950px;
       margin-top:1.5em;
+      box-sizing: border-box;
     }
     a {
       color: #adf;
@@ -117,13 +227,14 @@
     </style>
 
     <h1>DP-Display</h1>
-    Drag-and-drop your <b><u>dpreview-information-request.zip</u></b> or extracted json file here!
-    <p>Only <b><u>forum-posts.json</u></b> and/or <b><u>comments.json</u></b> are  displayed.
+    Drag-and-drop your <b><u>dpreview-information-request.zip</u></b> or your extracted json files (simultaneously) here!
+    <p>
     <div id="drop-area"></div>
-	or select it here:
+	<p>Or select them here:
     <p><input type="file" id="file-selector" multiple>
 	<div id="log"></div>
   <div id="userInfo"></div>
+  <div id="privCommDiv"></div>
 	<div id="topicList"></div>
 	<div id="forumDiv"></div>
 	<div id="commentsDiv"></div>
@@ -170,6 +281,7 @@ const userInfo = document.getElementById("userInfo");
 const topicList = document.getElementById("topicList");
 const forumDiv = document.getElementById("forumDiv");
 const commentsDiv = document.getElementById("commentsDiv");
+const privCommDiv = document.getElementById("privCommDiv");
 
 const logg = document.getElementById("log");
 
@@ -185,6 +297,7 @@ async function handleFile(files) {
         fileContents = { ...fileContents, ...JSON.parse(await zipContents.file("data/forum-posts.json").async("string")) };
         fileContents = { ...fileContents, ...JSON.parse(await zipContents.file("data/comments.json").async("string")) };
         fileContents = { ...fileContents, ...JSON.parse(await zipContents.file("data/user-info.json").async("string")) };
+        fileContents = { ...fileContents, ...JSON.parse(await zipContents.file("data/private-messages.json").async("string")) };
       } catch (e) {
         logg.innerHTML += "ERROR " + e;
       }
@@ -201,6 +314,7 @@ async function handleFile(files) {
   topicList.innerHTML = "";
   forumDiv.innerHTML = "";
   commentsDiv.innerHTML = "";
+  privCommDiv.innerHTML = "";
 
   if( logg.innerHTML !== "" ) return;
 
@@ -214,7 +328,65 @@ function processFile() {
   processUserInfo();
   processForumPosts();
 	processComments();
+  processPrivComm();
 }
+
+  function processPrivComm() {
+    const privComms = fileContents.privateMessages;
+    if (!privComms || privComms.length == 0) return;
+
+    // find all participants
+    let me = "";
+    const convs = new Set();
+    for (const p of privComms) {
+      let size = convs.size;
+      convs.add(p.to);
+      if (convs.size === size) me = p.to;
+
+      size = convs.size;
+      convs.add(p.from);
+      if (convs.size === size) me = p.from;
+    };
+    if (convs.size <= 2) me = fileContents.userName || "";
+    convs.delete(me);
+
+    // create conversation list
+    privCommDiv.innerHTML = "<h3>Private messages</h3>";
+    convs.forEach(u => {
+      const button = document.createElement('button');
+      button.classList.add('accordion');
+      button.innerHTML = `${u}`;
+      privCommDiv.append(button);
+
+      button.addEventListener("click", function () {
+        const vis = this.classList.toggle("active");
+        Array.from(document.getElementsByClassName('accordion')).forEach(button => {
+          button.classList.remove("active");
+        });
+        if(vis) this.classList.add("active");
+      });
+
+      const panel = document.createElement('div');
+      panel.classList.add('panel');
+      privCommDiv.append(panel);
+
+
+      let left = true;
+      let oldFrom;
+      privComms.filter(({ to, from }) => (to == u || from == u)).forEach(p => {
+        const div = document.createElement('div');
+        div.classList.add('container');
+        if (p.from !== oldFrom) {
+          left = !left;
+        }
+        const clazz = left ? 'left' : 'right';
+        div.classList.add(clazz);
+        div.innerHTML = `<span class="from">&nbsp;${p.from}&nbsp;</span>${p.message}<p><span class="time">${p.date}</span>`;
+        panel.append(div);
+        oldFrom = p.from;
+      });
+    });
+  }
 
 function processUserInfo() {
   if(!fileContents.userName) return;
@@ -247,7 +419,7 @@ function processForumPosts() {
   const forumPosts = fileContents.forumPosts;
   if( !forumPosts ) return;
 
-	topicList.innerHTML = "";
+	topicList.innerHTML = "<h3>Forum Posts</h3>";
 	forumDiv.innerHTML = "";
   const htmlList = document.createElement('ul');
 
@@ -255,7 +427,13 @@ function processForumPosts() {
     //TODO: if #topicList exists, remove?  Or, perhaps after loading, remove #drop-area.
     topicList.appendChild(htmlList);
 
-  if (fileContents.comments) {
+  if (fileContents.privateMessages) {
+    const li = document.createElement('li');
+    li.innerHTML = '<a href="#privCommDiv">go to private messages</a><p>';
+    htmlList.appendChild(li);
+  }
+
+	if (fileContents.comments) {
     const li = document.createElement('li');
     li.innerHTML = '<a href="#comments">go to comments</a><p>';
     htmlList.appendChild(li);
