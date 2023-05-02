@@ -59,56 +59,64 @@
 
       /* Style the buttons that are used to open and close the accordion panel */
       .accordion {
-        background-color: #eee;
-        color: #444;
+        background-color: #333;
+        margin: 1px 0;
+        color: white;
         cursor: pointer;
         font-weight: bold;
         padding: 10px;
         width: 100%;
         text-align: left;
         border: none;
-        border-radius: 5px;
         outline: none;
+        border-radius: 10px;
       }
-      .active, .accordion:hover { background-color: #ccc; }
-      .active { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+      .active, .accordion:hover { background-color: #ccc; color: black;}
+      .active a, .accordion:hover a { color:#06a; }
+      .accordion.active, .accordion.active:hover {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
       .panel {
+        margin: -1px 0;
         padding: 0 18px;
-        background-color: white;
+        background-color: #e9e9e9;
         color: black;
         display: none;
         overflow: hidden;
         box-sizing: border-box;
         position: relative;
+        border-radius: 10px;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
       }
       .active + .panel {display:block;}
       .accordion:after {
         content: '\02795'; /* Unicode character for "plus" sign (+) */
         font-size: 13px;
         color: #777;
-        float: right;
-        margin-left: 5px;
+        float: left;
+        margin-right: 5px;
       }
       .active:after {
         content: "\2796"; /* Unicode character for "minus" sign (-) */
       }
+      .accordion a:hover { background-color: #bbb;}
 
       /* Chat containers */
       .container {
         border: 2px solid #dedede;
-        background-color: #f1f1f1;
+        background-color: #fff;
         border-radius: 5px;
         padding: 10px;
         margin: 10px 0;
+        position: relative;
       }
-
-      /* Darker chat container */
       .container.right {
         border-color: #ccc;
         background-color: #ddd;
         margin-left: 7em;
       }
-
       .container.left {
         margin-right: 7em;
       }
@@ -122,35 +130,37 @@
 
       /* Style chat user */
       span.from {
-        max-width: 7em;
+        width: 7em;
         position:absolute;
-        width: 100%;
         font-weight: bold;
         word-break: break-word;
+        margin: 0 -19px;
       }
       .left span.from {
-        right:0;
-        margin-left: 10px;
-        margin-right: 0;
+        right:-7em;
       }
       .right span.from {
-        left: 0;
+        left: -7em;
         text-align: right;
       }
-       /* call out notch: */
-      span.from::after {
-        content: "";
+      /* callout notch: */
+      .notch {
         position: absolute;
-        top: -10px;
-        right: -20px;
-        border-width: 20px;
+        top: 6px;
+        right: -30px;
         border-style: solid;
-        border-color: transparent #ddd transparent transparent;
+        border-width: 15px;
+        border-color: transparent transparent transparent #fff;
+        margin: 0;
+        padding: 0;
+        width: 0;
+        height: 0;
       }
-      .left span.from::after {
-        left: -20px;
-        border-color: transparent transparent transparent #f1f1f1;
-      }
+      .border-notch { border-left-color: #dedede; right: -32px; }
+
+      .right .notch { border-color: transparent #ddd transparent transparent; left: -30px;}
+      .right .border-notch { border-right-color: #ccc; left: -32px; }
+
 
       /* time in chat: */
       .right span.time {
@@ -350,7 +360,7 @@ function processFile() {
     convs.delete(me);
 
     // create conversation list
-    privCommDiv.innerHTML = "<h3>Private messages</h3>";
+    privCommDiv.innerHTML = "<h2>Private messages</h2>";
     convs.forEach(u => {
       const button = document.createElement('button');
       button.classList.add('accordion');
@@ -380,7 +390,13 @@ function processFile() {
         }
         const clazz = left ? 'left' : 'right';
         div.classList.add(clazz);
-        div.innerHTML = `<span class="from">&nbsp;${p.from}&nbsp;</span>${p.message}<p><span class="time">${p.date}</span>`;
+        div.innerHTML = `
+        <span class="border-notch notch"></span>
+        <span class="notch"></span>
+        <span class="from">${p.from}</span>
+        ${p.message}
+        <p><span class="time">${p.date}</span>
+        `
         panel.append(div);
         oldFrom = p.from;
       });
@@ -397,7 +413,7 @@ function processComments() {
   const comments = fileContents.comments;
   if (!comments) return;
 
-  commentsDiv.innerHTML = '<h1 id="comments">Comments</h1>';
+  commentsDiv.innerHTML = '<h2 id="comments">Comments</h2>';
 
   const commentTitles = new Set(comments.map(item => item.contentTitle));
   commentTitles.forEach(cTitle => {
@@ -418,7 +434,7 @@ function processForumPosts() {
   const forumPosts = fileContents.forumPosts;
   if( !forumPosts ) return;
 
-	topicList.innerHTML = "<h3>Forum Posts</h3>";
+	topicList.innerHTML = "<h2>Forum Posts</h2>";
 	forumDiv.innerHTML = "";
   const htmlList = document.createElement('ul');
 
@@ -483,7 +499,7 @@ function processForumPosts() {
       const myDiv = document.createElement('div');
       myDiv.setAttribute('class','post');
       //Setting innerHTML isn't standard, but should work in most browsers anyway.
-      myDiv.innerHTML = '<br/>' +post.subject + '<br/>' + post.postDate  + '<hr/>' + post.messageTextHtml;
+      myDiv.innerHTML = post.subject + '<br/>' + post.postDate  + '<hr/>' + post.messageTextHtml;
       outerDiv.appendChild(myDiv);
 
 		// fix image source
