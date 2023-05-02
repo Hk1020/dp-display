@@ -476,15 +476,17 @@ function processForumPosts() {
 
   if (fileContents.privateMessages) {
     const li = document.createElement('li');
-    li.innerHTML = '<a href="#privCommDiv">go to private messages</a><p>';
+    li.innerHTML = '<a href="#privCommDiv"><i>go to private messages</a><p>';
     htmlList.appendChild(li);
   }
 
 	if (fileContents.comments) {
     const li = document.createElement('li');
-    li.innerHTML = '<a href="#comments">go to comments</a><p>';
+    li.innerHTML = '<a href="#comments"><i>go to comments</a><p>';
     htmlList.appendChild(li);
   }
+
+    htmlList.innerHTML += '<li><a href="#topiclist"><i>close forum</a><p>';
 
     var index=0;
     distinctValues.forEach(key => {
