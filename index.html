@@ -70,7 +70,7 @@
         outline: none;
         border-radius: 10px;
       }
-      .active, .accordion:hover { background-color: #ccc; color: black;}
+      .active, .accordion:hover, .allOpen:hover:after { background-color: #ccc; color: black;}
       .active a, .accordion:hover a { color:#06a; }
       .accordion.active, .accordion.active:hover {
         border-bottom-left-radius: 0;
@@ -101,6 +101,10 @@
         content: "\2796"; /* Unicode character for "minus" sign (-) */
       }
       .accordion a:hover { background-color: #bbb;}
+
+      .allOpen:after{ content: "open all"; color: #fff; font-style: italic;}
+      .allOpen.active:after{ content: "close all"; color: #000; }
+      .allOpen.active.accordion { border-radius: 10px; }
 
       /* Chat containers */
       .container {
@@ -347,7 +351,9 @@ function processFile() {
     parentDiv.append(button);
 
     button.addEventListener("click", function (event) {
-      const vis = event.target.tagName === "A" ? true : this.classList.toggle("active");
+      const opener = parentDiv.getElementsByClassName("allOpen")[0];
+      const opc = opener?.classList.toggle("active");
+      const vis = (event.target.tagName === "A" || !opc) ? true : this.classList.toggle("active");
       Array.from(parentDiv.getElementsByTagName("BUTTON")).forEach(button => {
         button.classList.remove("active");
       });
@@ -359,6 +365,23 @@ function processFile() {
     parentDiv.append(panel);
 
     return panel;
+  };
+
+  const accordionOpenAll = (parentDiv) => {
+    const button = document.createElement('button');
+    button.classList.add("accordion");
+    button.classList.add("allOpen");
+    button.addEventListener("click", function () {
+      const vis = this.classList.toggle("active");
+      Array.from(parentDiv.getElementsByTagName("BUTTON")).forEach(button => {
+        if(vis) {
+          button.classList.add("active");
+        } else {
+          button.classList.remove("active");
+        }
+      });
+    });
+    parentDiv.appendChild(button);
   };
 
   function processPrivComm() {
@@ -382,6 +405,7 @@ function processFile() {
 
     // create conversation list
     privCommDiv.innerHTML = "<h2>Private messages</h2>";
+    accordionOpenAll(privCommDiv);
     convs.forEach(u => {
       const panel = mkAccordionItem(privCommDiv, u);
 
@@ -419,6 +443,7 @@ function processComments() {
   if (!comments) return;
 
   commentsDiv.innerHTML = '<h2 id="comments">Comments</h2>';
+  accordionOpenAll(commentsDiv);
 
   const commentTitles = new Set(comments.map(item => item.contentTitle));
   commentTitles.forEach(cTitle => {
