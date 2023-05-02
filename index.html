@@ -37,7 +37,6 @@
 
 			.selected { font-weight:bold; }
 			.selected a { color:white; }
-			.cheader { margin-top:2em; margin-bottom:0.5em; }
 
 			.exif td:first-child { text-transform:capitalize; }
 			img:hover ~ .exif, .exif:hover { display:block; }
@@ -340,6 +339,28 @@ function processFile() {
   processPrivComm();
 }
 
+  const mkAccordionItem = (parentDiv, innerHTML) => {
+    const button = document.createElement('button');
+    button.classList.add('accordion');
+    button.innerHTML = `${innerHTML}`;
+    button.setAttribute("type", "button");
+    parentDiv.append(button);
+
+    button.addEventListener("click", function (event) {
+      const vis = event.target.tagName === "A" ? true : this.classList.toggle("active");
+      Array.from(parentDiv.getElementsByTagName("BUTTON")).forEach(button => {
+        button.classList.remove("active");
+      });
+      if (vis) this.classList.add("active");
+    });
+
+    const panel = document.createElement('div');
+    panel.classList.add('panel');
+    parentDiv.append(panel);
+
+    return panel;
+  };
+
   function processPrivComm() {
     const privComms = fileContents.privateMessages;
     if (!privComms || privComms.length == 0) return;
@@ -362,23 +383,7 @@ function processFile() {
     // create conversation list
     privCommDiv.innerHTML = "<h2>Private messages</h2>";
     convs.forEach(u => {
-      const button = document.createElement('button');
-      button.classList.add('accordion');
-      button.innerHTML = `${u}`;
-      privCommDiv.append(button);
-
-      button.addEventListener("click", function () {
-        const vis = this.classList.toggle("active");
-        Array.from(document.getElementsByClassName('accordion')).forEach(button => {
-          button.classList.remove("active");
-        });
-        if(vis) this.classList.add("active");
-      });
-
-      const panel = document.createElement('div');
-      panel.classList.add('panel');
-      privCommDiv.append(panel);
-
+      const panel = mkAccordionItem(privCommDiv, u);
 
       let left = true;
       let oldFrom;
@@ -418,14 +423,16 @@ function processComments() {
   const commentTitles = new Set(comments.map(item => item.contentTitle));
   commentTitles.forEach(cTitle => {
     let lastTitle;
+    let panel;
     comments.filter(c => c.contentTitle === cTitle).forEach(comment => {
       if (comment.contentTitle !== lastTitle) {
         const type = comment.contentUrl.includes("challenge") ? "photo" : "article";
-        commentsDiv.innerHTML += `<h3 class="cheader">On ${type} <a href="${comment.contentUrl}" target="dplost">${cTitle}</a></h3>`;
+        const html = `On ${type} <a href="${comment.contentUrl}" target="dplost">${cTitle}</a>`;
+        panel = mkAccordionItem(commentsDiv, html);
       }
       lastTitle = comment.contentTitle;
 
-      printComment(comment, commentsDiv);
+      printComment(comment, panel);
     });
   });
 }
@@ -615,7 +622,7 @@ function processForumPosts() {
 
 function printComment(post, outerDiv) {
 	const myDiv = document.createElement('div');
-	myDiv.innerHTML = `<hr/>${post.datePostedUtc} UTC <br/> ${post.commentText}`;
+	myDiv.innerHTML = `<small>${post.datePostedUtc} UTC</small><br/> ${post.commentText}`;
 	myDiv.setAttribute("class","post");
 	outerDiv.appendChild(myDiv);
 }
