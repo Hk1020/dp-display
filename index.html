@@ -353,12 +353,13 @@ function processFile() {
 
     button.addEventListener("click", function (event) {
       const opener = parentDiv.getElementsByClassName("allOpen")[0];
-      const opc = opener?.classList.toggle("active");
+      const opc = opener ? opener.classList.toggle("active") : true;
       const vis = (event.target.tagName === "A" || !opc) ? true : this.classList.toggle("active");
       Array.from(parentDiv.getElementsByTagName("BUTTON")).forEach(button => {
         button.classList.remove("active");
       });
       if (vis) this.classList.add("active");
+      this.scrollIntoView({block: "nearest"});
     });
 
     const panel = document.createElement('div');
